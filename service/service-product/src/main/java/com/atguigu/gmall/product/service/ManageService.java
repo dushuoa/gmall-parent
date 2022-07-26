@@ -1,6 +1,8 @@
 package com.atguigu.gmall.product.service;
 
 import com.atguigu.gmall.model.product.*;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 
@@ -57,4 +59,26 @@ public interface ManageService {
      * @return 属性Id对应的全部信息
      */
     BaseAttrInfo getBaseAttrInfoById(Long attrId);
+
+    /**
+     * sku分页列表
+     * @param pageParam 分页参数
+     * @return sku分页列表
+     */
+    IPage<SpuInfo> getSpuList(Page<SpuInfo> pageParam);
+
+    /**
+     * 品牌 分页列表
+     * @param pageParam 分页参数
+     * @return 品牌 分页列表
+     */
+    IPage<BaseTrademark> getBaseTrademarkPage(Page<BaseTrademark> pageParam);
+
+    /**
+     * 获取销售属性数据
+     * @return 销售属性数据
+     */
+    List<BaseSaleAttr> getBaseSaleAttrList();
+
+
 }

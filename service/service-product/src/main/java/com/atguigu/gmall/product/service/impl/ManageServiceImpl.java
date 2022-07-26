@@ -4,7 +4,8 @@ import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,12 @@ public class ManageServiceImpl implements ManageService {
     private BaseAttrInfoMapper baseAttrInfoMapper;
     @Resource
     private BaseAttrValueMapper baseAttrValueMapper;
+    @Resource
+    private SpuInfoMapper spuInfoMapper;
+    @Resource
+    private BaseTrademarkMapper baseTrademarkMapper;
+    @Resource
+    private BaseSaleAttrMapper baseSaleAttrMapper;
 
     //查询全部一级分类
     @Override
@@ -110,5 +117,22 @@ public class ManageServiceImpl implements ManageService {
         List<BaseAttrValue> attrValueList = this.getAttrValueList(baseAttrInfo.getId());
         baseAttrInfo.setAttrValueList(attrValueList);
         return baseAttrInfo;
+    }
+
+    @Override
+    public IPage<SpuInfo> getSpuList(Page<SpuInfo> pageParam) {
+        return spuInfoMapper.selectPage(pageParam,null);
+    }
+
+    // 品牌 分页列表
+    @Override
+    public IPage<BaseTrademark> getBaseTrademarkPage(Page<BaseTrademark> pageParam) {
+        return baseTrademarkMapper.selectPage(pageParam,null);
+    }
+
+    // 销售属性数据
+    @Override
+    public List<BaseSaleAttr> getBaseSaleAttrList() {
+        return baseSaleAttrMapper.selectList(null);
     }
 }
