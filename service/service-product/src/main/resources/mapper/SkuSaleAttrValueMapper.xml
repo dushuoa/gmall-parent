@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.gmall.product.mapper.SkuSaleAttrValueMapper">
+
+    <select id="selectSkuSaleAttrValueList" resultType="com.atguigu.gmall.model.product.SkuSaleAttrValue">
+        select
+            ssav.sale_attr_value_name
+        from sku_sale_attr_value saav
+                 inner join spu_sale_attr_value ssav on saav.sale_attr_value_id = ssav.id
+        where sku_id = 24
+          and saav.is_deleted = 0
+          and ssav.is_deleted = 0
+    </select>
+
+</mapper>

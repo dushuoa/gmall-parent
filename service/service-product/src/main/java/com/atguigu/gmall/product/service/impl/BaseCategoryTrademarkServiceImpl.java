@@ -6,7 +6,6 @@ import com.atguigu.gmall.model.product.CategoryTrademarkVo;
 import com.atguigu.gmall.product.mapper.BaseCategoryTrademarkMapper;
 import com.atguigu.gmall.product.mapper.BaseTrademarkMapper;
 import com.atguigu.gmall.product.service.BaseCategoryTrademarkService;
-import com.atguigu.gmall.product.service.BaseTrademarkService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -98,7 +97,7 @@ public class BaseCategoryTrademarkServiceImpl
                 baseCategoryTrademark.setTrademarkId(id);
                 categoryTrademarkArrayList.add(baseCategoryTrademark);
             });
-            new BaseCategoryTrademarkServiceImpl().saveBatch(categoryTrademarkArrayList);
+            this.saveBatch(categoryTrademarkArrayList);
         }
     }
 
