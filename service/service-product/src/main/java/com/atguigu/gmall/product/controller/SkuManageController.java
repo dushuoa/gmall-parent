@@ -68,10 +68,11 @@ public class SkuManageController {
     }
 
     // http://localhost/admin/product/updateSkuInfo
-    // 修改spu信息
+    // 修改sku信息
     @PostMapping("/updateSkuInfo")
     public Result updateSkuInfo(@RequestBody SkuInfo skuInfo){
-        // TODO 调用服务层修改sku信息
+        // 调用服务层修改sku信息
+        manageService.saveSkuInfo(skuInfo);
         return Result.ok();
     }
 

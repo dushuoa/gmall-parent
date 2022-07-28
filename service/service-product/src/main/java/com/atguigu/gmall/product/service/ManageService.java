@@ -101,7 +101,7 @@ public interface ManageService {
     List<SpuImage> getSpuImageList(Long spuId);
 
     /**
-     * 保存SkuInfo
+     * 保存/修改 SkuInfo
      * @param skuInfo sku全部信息
      */
     void saveSkuInfo(SkuInfo skuInfo);

@@ -226,12 +226,26 @@ public class ManageServiceImpl implements ManageService {
         return spuImageMapper.selectList(wrapper);
     }
 
-    // 保存SkuInfo
+    // 保存/修改 SkuInfo
     @Override
     @Transactional
     public void saveSkuInfo(SkuInfo skuInfo) {
-        //插入skuInfo
-        skuInfoMapper.insert(skuInfo);
+        if(skuInfo.getId()!=null){
+            // 不是null，说明是修改
+            // 根据id修改spuInfo
+            skuInfoMapper.updateById(skuInfo);
+            // 删除关于该sku的其他信息
+            // 删除图片
+            skuImageMapper.delete(new QueryWrapper<SkuImage>().eq("sku_id",skuInfo.getId()));
+            // 删除平台属性
+            skuAttrValueMapper.delete(new QueryWrapper<SkuAttrValue>().eq("sku_id",skuInfo.getId()));
+            // 删除销售属性
+            skuSaleAttrValueMapper.delete(new QueryWrapper<SkuSaleAttrValue>().eq("sku_id",skuInfo.getId()));
+        }else {
+            //插入skuInfo
+            skuInfoMapper.insert(skuInfo);
+        }
+
         //分别取出，插入到不同的表
         List<SkuImage> skuImageList = skuInfo.getSkuImageList();
         if(!CollectionUtils.isEmpty(skuImageList)){
