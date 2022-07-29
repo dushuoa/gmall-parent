@@ -9,9 +9,16 @@
             ssav.sale_attr_value_name
         from sku_sale_attr_value saav
                  inner join spu_sale_attr_value ssav on saav.sale_attr_value_id = ssav.id
-        where sku_id = 24
+        where sku_id = #{skuId}
           and saav.is_deleted = 0
           and ssav.is_deleted = 0
+    </select>
+
+    <select id="selectSkuValueIdsMap" resultType="map">
+        select sku_id, GROUP_CONCAT(sale_attr_value_id order by id separator '|') as value_ids
+        from sku_sale_attr_value
+        where spu_id = #{spuId}
+        group by sku_id;
     </select>
 
 </mapper>

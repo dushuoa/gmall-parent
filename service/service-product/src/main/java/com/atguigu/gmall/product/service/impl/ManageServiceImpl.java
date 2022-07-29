@@ -6,12 +6,16 @@ import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.reactivex.rxjava3.internal.operators.observable.ObservableGenerate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author dushuo
@@ -52,6 +56,8 @@ public class ManageServiceImpl implements ManageService {
     private SkuAttrValueMapper skuAttrValueMapper;
     @Resource
     private SkuSaleAttrValueMapper skuSaleAttrValueMapper;
+    @Resource
+    private BaseCategoryViewMapper baseCategoryViewMapper;
 
     //查询全部一级分类
     @Override
@@ -348,5 +354,62 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setSkuSaleAttrValueList(skuSaleAttrValueList);
 
         return skuInfo;
+    }
+
+    // 获取SkuInfo 详细信息，包括图片
+    @Override
+    public SkuInfo getApiSkuInfo(Long skuId) {
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        // 查询图片集合
+        List<SkuImage> skuImageList =
+                skuImageMapper.selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+        // 封装到集合对象中
+        skuInfo.setSkuImageList(skuImageList);
+        return skuInfo;
+    }
+
+    // 根据三级分类id，查询对应的一二三级分类信息
+    @Override
+    public BaseCategoryView getCategoryViewByCategory3Id(String category3Id) {
+        BaseCategoryView baseCategoryView = baseCategoryViewMapper.selectById(category3Id);
+        return baseCategoryView;
+    }
+
+    // 获取价格信息，实时查询
+    @Override
+    public BigDecimal getSkuPriceBySkuId(Long skuId) {
+        QueryWrapper<SkuInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("id",skuId);
+        wrapper.select("price");
+        SkuInfo skuInfo = skuInfoMapper.selectOne(wrapper);
+        return skuInfo.getPrice();
+    }
+
+    // 根据spuId 获取海报数据
+    @Override
+    public List<SpuPoster> getSpuPosterBySpuId(Long spuId) {
+        QueryWrapper<SpuPoster> wrapper = new QueryWrapper<>();
+        wrapper.eq("spu_id",spuId);
+        return spuPosterMapper.selectList(wrapper);
+    }
+
+    // 根据 skuId和spuId查询出对应的销售属性和销售属性值
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
+        return spuSaleAttrMapper.selectSpuSaleAttrListCheckBySku(skuId,spuId);
+    }
+
+    // 根据spuId 查询该spu下所有sku对应的属性值关系
+    @Override
+    public Map<Object, Object> getSkuValueIdsMap(Long spuId) {
+        //定义返回的对象
+        HashMap<Object, Object> resultMap = new HashMap<>();
+        List<Map<String, Object>> mapList = skuSaleAttrValueMapper.selectSkuValueIdsMap(spuId);
+        if(!CollectionUtils.isEmpty(mapList)){
+            mapList.forEach(map->{
+                resultMap.put(map.get("value_ids"),map.get("sku_id"));
+            });
+        }
+        return resultMap;
     }
 }
