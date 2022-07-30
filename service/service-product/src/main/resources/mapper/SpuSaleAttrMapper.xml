@@ -40,7 +40,7 @@
                  inner join spu_sale_attr_value ssav
                             on ssa.base_sale_attr_id = ssav.base_sale_attr_id and ssa.spu_id = ssav.spu_id
                  left join sku_sale_attr_value sv on sv.sale_attr_value_id = ssav.id and sv.spu_id = ssa.spu_id and sku_id = #{skuId}
-        where ssa.spu_id = #{spuId}
+        where ssa.spu_id = #{spuId} and ssa.is_deleted = 0 and ssav.is_deleted = 0
         order by ssav.base_sale_attr_id,ssav.id;
     </select>
 

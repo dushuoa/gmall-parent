@@ -156,7 +156,7 @@ public interface ManageService {
      * @param category3Id 三级分类id
      * @return 一二三级分类信息
      */
-    BaseCategoryView getCategoryViewByCategory3Id(String category3Id);
+    BaseCategoryView getCategoryViewByCategory3Id(Long category3Id);
 
     /**
      * 获取价格信息，实时查询
@@ -186,4 +186,17 @@ public interface ManageService {
      * @return 所有sku对应的属性值关系
      */
     Map<Object, Object> getSkuValueIdsMap(Long spuId);
+
+    /**
+     * 根据skuId查询对应的平台属性
+     * @param skuId 商品id
+     * @return skuId对应的平台属性
+     */
+    List<BaseAttrInfo> getAttrList(Long skuId);
+
+    /**
+     * 根据spuId删除所有spu相关信息
+     * @param spuId spuID
+     */
+    void deleteSpuInfo(Long spuId);
 }

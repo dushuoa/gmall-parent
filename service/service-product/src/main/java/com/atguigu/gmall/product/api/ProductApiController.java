@@ -1,9 +1,6 @@
 package com.atguigu.gmall.product.api;
 
-import com.atguigu.gmall.model.product.BaseCategoryView;
-import com.atguigu.gmall.model.product.SkuInfo;
-import com.atguigu.gmall.model.product.SpuPoster;
-import com.atguigu.gmall.model.product.SpuSaleAttr;
+import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.service.ManageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +33,7 @@ public class ProductApiController {
 
     // 根据三级分类id，查询对应的一二三级分类信息
     @GetMapping("inner/getCategoryView/{category3Id}")
-    public BaseCategoryView getCategoryViewByCategory3Id(@PathVariable String category3Id){
+    public BaseCategoryView getCategoryViewByCategory3Id(@PathVariable Long category3Id){
         return manageService.getCategoryViewByCategory3Id(category3Id);
     }
 
@@ -64,6 +61,12 @@ public class ProductApiController {
     @GetMapping("inner/getSkuValueIdsMap/{spuId}")
     public Map<Object,Object> getSkuValueIdsMap(@PathVariable Long spuId){
         return manageService.getSkuValueIdsMap(spuId);
+    }
+
+    // 根据skuId查询对应的平台属性
+    @GetMapping("inner/getAttrList/{skuId}")
+    public List<BaseAttrInfo> getAttrList(@PathVariable Long skuId){
+        return manageService.getAttrList(skuId);
     }
 
 }

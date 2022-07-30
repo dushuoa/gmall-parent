@@ -85,5 +85,12 @@ public class SpuManageController {
         return Result.ok();
     }
 
+    // 根据spuId删除所有spu和sku相关信息
+    @DeleteMapping("/deleteSpuInfo/{spuId}")
+    public Result deleteSpuInfo(@PathVariable Long spuId){
+        manageService.deleteSpuInfo(spuId);
+        return Result.ok();
+    }
+
 
 }

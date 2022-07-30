@@ -60,7 +60,7 @@ public class SkuManageController {
     }
 
     // http://localhost/admin/product/getSkuInfo/21
-    // 根据skuId获取sku全部信息
+    // 根据skuId获取sku全部信息 回显后台
     @GetMapping("/getSkuInfo/{skuId}")
     public Result getSkuInfo(@PathVariable Long skuId){
         SkuInfo skuInfo = manageService.getSkuInfo(skuId);

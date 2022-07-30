@@ -13,4 +13,7 @@ import java.util.List;
 public interface BaseAttrInfoMapper extends BaseMapper<BaseAttrInfo> {
     //根据分类Id 获取平台属性集合
     List<BaseAttrInfo> getAttrInfoList(Long category1Id, Long category2Id, Long category3Id);
+
+    // 根据skuId查询对应的平台属性
+    List<BaseAttrInfo> selectAttrList(Long skuId);
 }

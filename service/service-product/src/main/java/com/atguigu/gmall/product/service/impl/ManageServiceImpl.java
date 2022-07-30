@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Author dushuo
@@ -370,7 +371,7 @@ public class ManageServiceImpl implements ManageService {
 
     // 根据三级分类id，查询对应的一二三级分类信息
     @Override
-    public BaseCategoryView getCategoryViewByCategory3Id(String category3Id) {
+    public BaseCategoryView getCategoryViewByCategory3Id(Long category3Id) {
         BaseCategoryView baseCategoryView = baseCategoryViewMapper.selectById(category3Id);
         return baseCategoryView;
     }
@@ -411,5 +412,45 @@ public class ManageServiceImpl implements ManageService {
             });
         }
         return resultMap;
+    }
+
+    // 根据skuId查询对应的平台属性
+    @Override
+    public List<BaseAttrInfo> getAttrList(Long skuId) {
+        return baseAttrInfoMapper.selectAttrList(skuId);
+    }
+
+    // 根据spuId删除所有spu相关信息
+    @Override
+    @Transactional
+    public void deleteSpuInfo(Long spuId) {
+        // 根据spuId查询出对应的skuId的集合
+        // 先去执行删除对应的sku信息
+        QueryWrapper<SkuSaleAttrValue> skuSaleAttrValueQueryWrapper = new QueryWrapper<>();
+        skuSaleAttrValueQueryWrapper.eq("spu_id",spuId);
+        skuSaleAttrValueQueryWrapper.select("sku_id");
+        // spu对应的全部sku集合
+        List<SkuSaleAttrValue> skuSaleAttrValues = skuSaleAttrValueMapper.selectList(skuSaleAttrValueQueryWrapper);
+        if(skuSaleAttrValues != null){
+            // 要删除的skuId集合
+            List<Long> list = skuSaleAttrValues.stream().map(SkuSaleAttrValue::getSkuId).collect(Collectors.toList());
+            list.forEach(skuId->{
+                // 删除sku基本信息
+                skuInfoMapper.deleteById(skuId);
+                // 删除图片
+                skuImageMapper.delete(new QueryWrapper<SkuImage>().eq("sku_id",skuId));
+                // 删除平台属性
+                skuAttrValueMapper.delete(new QueryWrapper<SkuAttrValue>().eq("sku_id",skuId));
+                // 删除销售属性
+                skuSaleAttrValueMapper.delete(new QueryWrapper<SkuSaleAttrValue>().eq("sku_id",skuId));
+            });
+        }
+
+        // 删除spu的全部信息
+        spuInfoMapper.deleteById(spuId);
+        spuImageMapper.delete(new QueryWrapper<SpuImage>().eq("spu_id",spuId));
+        spuPosterMapper.delete(new QueryWrapper<SpuPoster>().eq("spu_id",spuId));
+        spuSaleAttrMapper.delete(new QueryWrapper<SpuSaleAttr>().eq("spu_id",spuId));
+        spuSaleAttrValueMapper.delete(new QueryWrapper<SpuSaleAttrValue>().eq("spu_id",spuId));
     }
 }
