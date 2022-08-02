@@ -1,9 +1,12 @@
 package com.atguigu.gmall.item.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.item.service.ItemService;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.client.ProductFeignClient;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,9 +27,19 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private ProductFeignClient productFeignClient;
 
+    @Autowired
+    private RedissonClient redissonClient;
+
     // 整合sku详情信息接口
     @Override
     public Map<String,Object> getSkuItem(Long skuId) {
+        // 先去判断布隆过滤器有没有
+        // 方便后续测试 先注释
+//        RBloomFilter<Object> bloomFilter = redissonClient.getBloomFilter(RedisConst.SKU_BLOOM_FILTER);
+//        if(!bloomFilter.contains(skuId)){
+//            return null;
+//        }
+
         Map<String, Object> resultMap = new HashMap<>();
 
         // 获取sku基本信息和图片信息

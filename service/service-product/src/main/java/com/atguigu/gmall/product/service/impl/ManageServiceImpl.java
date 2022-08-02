@@ -1,5 +1,6 @@
 package com.atguigu.gmall.product.service.impl;
 
+import com.atguigu.gmall.common.cache.GmallCache;
 import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
@@ -7,6 +8,7 @@ import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -291,6 +294,10 @@ public class ManageServiceImpl implements ManageService {
                 skuSaleAttrValueMapper.insert(skuSaleAttrValue);
             });
         }
+
+        // 添加到布隆过滤器
+        RBloomFilter<Object> bloomFilter = redissonClient.getBloomFilter(RedisConst.SKU_BLOOM_FILTER);
+        bloomFilter.add(skuInfo.getId());
     }
 
     // 根据三级分类id查询出sku分页列表
@@ -301,6 +308,7 @@ public class ManageServiceImpl implements ManageService {
         return skuInfoMapper.selectPage(pageParam, wrapper);
     }
 
+    // 上架
     @Override
     public void onSale(Long skuId) {
         SkuInfo skuInfo = new SkuInfo();
@@ -309,6 +317,7 @@ public class ManageServiceImpl implements ManageService {
         skuInfoMapper.updateById(skuInfo);
     }
 
+    // 下架
     @Override
     public void cancelSale(Long skuId) {
         SkuInfo skuInfo = new SkuInfo();
@@ -368,43 +377,51 @@ public class ManageServiceImpl implements ManageService {
 
     // 获取SkuInfo 详细信息，包括图片
     @Override
+    @GmallCache(prefix = "sku:")
     public SkuInfo getApiSkuInfo(Long skuId) {
-        // 使用redisson实现
-        SkuInfo skuInfo = null;
-        // 为了防止服务器宕机
-        try {
-            // 先从缓存中查询数据
-            String skuKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKUKEY_SUFFIX;
-            skuInfo = (SkuInfo) redisTemplate.opsForValue().get(skuKey);
-            if(skuInfo == null){
-                // 缓存没有
-                // 为了防止高并发的情况，采用分布式锁，只允许一个线程查询数据库
-                String lockName = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKULOCK_SUFFIX;
-                RLock lock = redissonClient.getLock(lockName);
-                try {
-                    lock.lock();
-                    // 查询数据库
-                    skuInfo = this.getSkuInfoDB(skuId);
-                    // 判断是否为空，为了防止缓存穿透
-                    if(skuInfo == null){
-                        // 直接缓存一个空的数据
-                        skuInfo = new SkuInfo();
-                        redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TEMPORARY_TIMEOUT,TimeUnit.MINUTES);
-                        return skuInfo;
-                    }
-                    redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
-                    return skuInfo;
-                } finally {
-                    lock.unlock();
-                }
-            } else {
-                // 缓存有，直接返回
-                return skuInfo;
-            }
-        } catch (Exception e) {
-            // 调用短信模块，发消息给运维
-            e.printStackTrace();
-        }
+//        // 使用redisson实现
+//        SkuInfo skuInfo = null;
+//        // 为了防止服务器宕机
+//        try {
+//            // 先从缓存中查询数据
+//            String skuKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKUKEY_SUFFIX;
+//            skuInfo = (SkuInfo) redisTemplate.opsForValue().get(skuKey);
+//            if(skuInfo == null){
+//                // 缓存没有
+//                // 为了防止高并发的情况，采用分布式锁，只允许一个线程查询数据库
+//                String lockName = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKULOCK_SUFFIX;
+//                RLock lock = redissonClient.getLock(lockName);
+//                try {
+//                    //lock.lock(10,TimeUnit.SECONDS);
+//                    // 拿到锁以后 锁的有效时间是10秒
+//                    boolean result = lock.tryLock(10, TimeUnit.SECONDS);
+//                    if(result){
+//                        // 查询数据库
+//                        skuInfo = this.getSkuInfoDB(skuId);
+//                        // 判断是否为空，为了防止缓存穿透
+//                        if(skuInfo == null){
+//                            // 直接缓存一个空的数据
+//                            skuInfo = new SkuInfo();
+//                            redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TEMPORARY_TIMEOUT,TimeUnit.MINUTES);
+//                            return skuInfo;
+//                        }
+//                        redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
+//                        return skuInfo;
+//                    } else {
+//                        Thread.sleep(500);
+//                        this.getApiSkuInfo(skuId);
+//                    }
+//                } finally {
+//                    lock.unlock();
+//                }
+//            } else {
+//                // 缓存有，直接返回
+//                return skuInfo;
+//            }
+//        } catch (Exception e) {
+//            // 调用短信模块，发消息给运维
+//            e.printStackTrace();
+//        }
         return this.getSkuInfoDB(skuId);
         // 使用原生redis和lua脚本的方式实现分布式锁
         //return getApiSkuInfoByRedisAndLua(skuId);
@@ -489,6 +506,7 @@ public class ManageServiceImpl implements ManageService {
 
     // 根据三级分类id，查询对应的一二三级分类信息
     @Override
+    @GmallCache(prefix = "categoryView:")
     public BaseCategoryView getCategoryViewByCategory3Id(Long category3Id) {
         BaseCategoryView baseCategoryView = baseCategoryViewMapper.selectById(category3Id);
         return baseCategoryView;
@@ -506,6 +524,7 @@ public class ManageServiceImpl implements ManageService {
 
     // 根据spuId 获取海报数据
     @Override
+    @GmallCache(prefix = "spuPoster:")
     public List<SpuPoster> getSpuPosterBySpuId(Long spuId) {
         QueryWrapper<SpuPoster> wrapper = new QueryWrapper<>();
         wrapper.eq("spu_id",spuId);
@@ -514,12 +533,14 @@ public class ManageServiceImpl implements ManageService {
 
     // 根据 skuId和spuId查询出对应的销售属性和销售属性值
     @Override
+    @GmallCache(prefix = "spuSaleAttr:")
     public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
         return spuSaleAttrMapper.selectSpuSaleAttrListCheckBySku(skuId,spuId);
     }
 
     // 根据spuId 查询该spu下所有sku对应的属性值关系
     @Override
+    @GmallCache(prefix = "skuValueIds")
     public Map<Object, Object> getSkuValueIdsMap(Long spuId) {
         //定义返回的对象
         HashMap<Object, Object> resultMap = new HashMap<>();
