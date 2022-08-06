@@ -1,5 +1,6 @@
 package com.atguigu.gmall.product.client;
 
+import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.client.impl.ProductFeignClientImpl;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -42,4 +43,10 @@ public interface ProductFeignClient {
     // 根据skuId查询对应的平台属性
     @GetMapping("/api/product/inner/getAttrList/{skuId}")
     public List<BaseAttrInfo> getAttrList(@PathVariable Long skuId);
+
+    @GetMapping("/api/product/getBaseCategoryList")
+    public Result getBaseCategoryList();
+
+    @GetMapping("/api/product/inner/getTrademark/{tmId}")
+    public BaseTrademark getTrademark(@PathVariable("tmId")Long tmId);
 }
