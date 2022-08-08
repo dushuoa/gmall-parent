@@ -9,6 +9,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,9 +36,69 @@ public class ListController {
     public String search(SearchParam searchParam, Model model){
         Result<Map> result = listFeignClient.search(searchParam);
         String urlParam = makeUrlParam(searchParam);
+
+        // 制作品牌面包屑
+        String trademarkParam = makeTradeMarkParam(searchParam.getTrademark());
+
+        // 制作平台属性的面包屑
+        List<Map> propsParamList = makePropsParam(searchParam.getProps());
+
+        // 排序
+        Map<String, Object> orderMap = makeOrderMap(searchParam.getOrder());
+
         model.addAllAttributes(result.getData());
         model.addAttribute("urlParam",urlParam);
+        model.addAttribute("goodsList",result.getData().get("goodsList"));
+        model.addAttribute("trademarkParam",trademarkParam);
+        model.addAttribute("propsParamList",propsParamList);
+        model.addAttribute("orderMap",orderMap);
         return "list/index";
+    }
+
+    // 排序 2:desc
+    private Map<String, Object> makeOrderMap(String order) {
+        HashMap<String, Object> map = new HashMap<>();
+        if(!StringUtils.isEmpty(order)){
+            String[] split = order.split(":");
+            if(split.length == 2){
+                map.put("type",split[0].toString());
+                map.put("sort",split[1].toString());
+            }
+        }else {
+            map.put("type","1");
+            map.put("sort","desc");
+        }
+        return map;
+    }
+
+    // 制作平台属性的面包屑
+    private List<Map> makePropsParam(String[] props) {
+        List<Map> list = new ArrayList<>();
+        if(props != null){
+            for (String prop : props) {
+                // prop = 23:8G:运行内存
+                String[] split = prop.split(":");
+                if(split.length == 3){
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("attrName",split[2]);
+                    map.put("attrValue",split[1]);
+                    map.put("attrId",split[0]);
+                    list.add(map);
+                }
+            }
+        }
+        return list;
+    }
+
+    // 品牌面包屑 1:小米
+    private String makeTradeMarkParam(String trademark) {
+        if(!StringUtils.isEmpty(trademark)){
+            String[] split = trademark.split(":");
+            if(split.length == 2){
+                return "品牌: "+split[1].toString();
+            }
+        }
+        return null;
     }
 
     // 拼接请求参数的url
@@ -63,15 +126,17 @@ public class ListController {
         }
         // 拼接平台属性
         String[] props = searchParam.getProps();
-        if(props.length > 0){
-            for (String prop : props) {
-                if(urlParam.length()>0){
-                    // &props=23:8G:运行内存&props=24:128G:
-                    urlParam.append("&props=").append(prop);
+        if(props != null){
+            if(props.length > 0){
+                for (String prop : props) {
+                    if(urlParam.length()>0){
+                        // &props=23:8G:运行内存&props=24:128G:
+                        urlParam.append("&props=").append(prop);
+                    }
                 }
             }
         }
-        return "list.item?"+ urlParam.toString();
+        return "list.html?"+ urlParam.toString();
     }
 
 

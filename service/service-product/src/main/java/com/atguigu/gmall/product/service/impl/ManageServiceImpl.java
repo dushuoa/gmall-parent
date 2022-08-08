@@ -73,6 +73,8 @@ public class ManageServiceImpl implements ManageService {
     private RedisTemplate redisTemplate;
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private BannerInfoMapper bannerInfoMapper;
 
     //查询全部一级分类
     @Override
@@ -672,7 +674,17 @@ public class ManageServiceImpl implements ManageService {
             // 一级分类数据添加到返回对象里
             list.add(jsonObject);
         }
-
         return list;
+    }
+
+    // 获取banner分页列表
+    @Override
+    public IPage<BannerInfo> getBannerPage(Page<BannerInfo> pageParam) {
+        QueryWrapper<BannerInfo> wrapper = new QueryWrapper<>();
+        // 组装分页条件
+//        if(bannerInfo != null){
+//
+//        }
+        return bannerInfoMapper.selectPage(pageParam, null);
     }
 }

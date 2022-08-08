@@ -24,7 +24,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
@@ -32,7 +31,6 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -46,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @Author dushuo
@@ -161,6 +158,8 @@ public class SearchServiceImpl implements SearchService {
             SearchResponseTmVo searchResponseTmVo = new SearchResponseTmVo();
             Number tmId = bucket.getKeyAsNumber();
             searchResponseTmVo.setTmId(tmId.longValue());
+
+            // 获取品牌id的子聚合
             Map<String, Aggregation> subTmIdAgg = bucket.getAggregations().asMap();
 
 
@@ -273,7 +272,7 @@ public class SearchServiceImpl implements SearchService {
             // 循环遍历
             for (String prop : props) {
                 // 23:4G:运行内存
-                String[] split = StringUtils.split(prop, ":");
+                String[] split = prop.split( ":");
                 if (split!=null && split.length==3){
                     // 构建嵌套查询
                     BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();

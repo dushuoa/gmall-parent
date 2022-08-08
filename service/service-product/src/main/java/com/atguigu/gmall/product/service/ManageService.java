@@ -207,4 +207,11 @@ public interface ManageService {
      */
     List<JSONObject> getBaseCategoryList();
 
+    /**
+     * 获取banner分页列表
+     * @param pageParam 分页参数
+     * @param bannerInfo 条件
+     * @return banner分页列表
+     */
+    IPage<BannerInfo> getBannerPage(Page<BannerInfo> pageParam);
 }
