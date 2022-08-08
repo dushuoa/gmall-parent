@@ -76,27 +76,21 @@
 			<div class="yui3-u Center banerArea">
 				<!--banner轮播-->
 				<div id="myCarousel" data-ride="carousel" data-interval="4000" class="sui-carousel slide">
-					<ol class="carousel-indicators">
-						<li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-						<li data-target="#myCarousel" data-slide-to="1"></li>
-						<li data-target="#myCarousel" data-slide-to="2"></li>
+					<ol class="carousel-indicators" >
+						<li th:each="banner,stat : ${bannerList}"
+							data-target="#myCarousel"
+							th:attr="data-slide-to=${stat.index}"
+						th:class="${stat.index == 0} ? 'active'"></li>
+<!--						<li data-target="#myCarousel" data-slide-to="0" class="active"></li>-->
+<!--						<li data-target="#myCarousel" data-slide-to="1"></li>-->
+<!--						<li data-target="#myCarousel" data-slide-to="2"></li>-->
 					</ol>
 					<div class="carousel-inner">
-						<div class="active item">
-							<a href="http://baidu2.wypxj.com/">
-								<img src="./img/banner1.jpg" />
+						<div class="item" th:each="banner,stat : ${bannerList}" th:classappend="${stat.index == 0}? 'active'">
+							<a th:href="${banner.toUrl}">
+								<img th:src="${banner.bannerUrl}" alt="First slide"/>
 							</a>
-						</div>
-						<div class="item">
-							<a href="http://baidu2.wypxj.com/">
-								<img src="./img/banner2.jpg" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="http://baidu2.wypxj.com/">
-								<img src="./img/banner3.jpg" />
-							</a>
-
+							<div class="carousel-caption"></div>
 						</div>
 					</div>
 					<a href="#myCarousel" data-slide="prev" class="carousel-control left">‹</a>

@@ -42,6 +42,7 @@ public class ItemController {
     @Resource
     private TemplateEngine templateEngine;
 
+    // 详情页
     @GetMapping("{skuId}.html")
     public String getSkuItem(@PathVariable Long skuId, Model model){
         Result result = itemFeignClient.getSkuItem(skuId);
@@ -49,12 +50,7 @@ public class ItemController {
         return "item/item";
     }
 
-    @GetMapping(value = {"/","/index.html"})
-    public String getBaseCategoryList(Model model){
-        Result result = productFeignClient.getBaseCategoryList();
-        model.addAttribute("list",result.getData());
-        return "index/index";
-    }
+
     @GetMapping("create")
     @ResponseBody
     public Result createIndex(){

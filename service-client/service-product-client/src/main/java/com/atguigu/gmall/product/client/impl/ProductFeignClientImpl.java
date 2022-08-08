@@ -60,4 +60,9 @@ public class ProductFeignClientImpl implements ProductFeignClient {
     public BaseTrademark getTrademark(Long tmId) {
         return null;
     }
+
+    @Override
+    public Result getBannerList() {
+        return null;
+    }
 }

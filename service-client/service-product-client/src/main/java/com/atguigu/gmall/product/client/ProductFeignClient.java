@@ -49,4 +49,8 @@ public interface ProductFeignClient {
 
     @GetMapping("/api/product/inner/getTrademark/{tmId}")
     public BaseTrademark getTrademark(@PathVariable("tmId")Long tmId);
+
+    // 获取前三个添加的轮播图
+    @GetMapping("/admin/product/banner/getBannerList")
+    public Result getBannerList();
 }
