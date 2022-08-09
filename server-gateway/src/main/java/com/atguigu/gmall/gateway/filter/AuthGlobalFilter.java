@@ -1,13 +1,17 @@
 package com.atguigu.gmall.gateway.filter;
 
 import com.alibaba.fastjson.JSONObject;
+import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.result.ResultCodeEnum;
 import com.atguigu.gmall.common.util.IpUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -20,6 +24,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -40,7 +45,6 @@ public class AuthGlobalFilter implements GlobalFilter {
 
     @Value("${authUrls.url}")
     private String authUrls;
-
 
 
     @Override
@@ -66,10 +70,6 @@ public class AuthGlobalFilter implements GlobalFilter {
             if(StringUtils.isEmpty(userId)){
                 // 没有登录，重定向到登录页面
                 ServerHttpResponse response = exchange.getResponse();
-//                response.setStatusCode(HttpStatus.SEE_OTHER);
-//                response.getHeaders()
-//                        .set(HttpHeaders.LOCATION,"http://www.gmall.com/login.html?originUrl="+request.getURI());
-//                return response.setComplete();
                 return out(response,ResultCodeEnum.LOGIN_AUTH);
             }
         }
@@ -86,42 +86,81 @@ public class AuthGlobalFilter implements GlobalFilter {
                 }
             }
         }
-
+        String userTempId = getUserTempId(request);
         // 将用户Id保存到请求头中，给后台使用
-        if(!StringUtils.isEmpty(userId)){
-            request.mutate().header("userId", userId).build();
+        if(!StringUtils.isEmpty(userId) || !StringUtils.isEmpty(userTempId)){
+            if(!StringUtils.isEmpty(userId)){
+                request.mutate().header("userId", userId).build();
+            }
+            if(!StringUtils.isEmpty(userTempId)){
+                request.mutate().header("userTempId", userTempId).build();
+            }
             return chain.filter(exchange.mutate().request(request).build());
         }
         return chain.filter(exchange);
     }
 
-    private String getUserId(ServerHttpRequest request) {
-        String token = "";
-        List<String> list = request.getHeaders().get("token");
-        if(!CollectionUtils.isEmpty(list)){
-            token = list.get(0);
-        }
-        if(!StringUtils.isEmpty(token)){
-            String loginKey = "user:login:"+token;
-            String strJson = (String) redisTemplate.opsForValue().get(loginKey);
-            // 转换对象
-            JSONObject jsonObject = JSONObject.parseObject(strJson);
-            String userId = (String) jsonObject.get("userId");
-            String ip = (String) jsonObject.get("ip");
-
-            String ipAddress = IpUtil.getGatwayIpAddress(request);
-            if(!ipAddress.equals(ip)){
-                return "-1";
-            } else {
-                return userId;
+    // 获取用户临时id放到请求头中
+    private String getUserTempId(ServerHttpRequest request) {
+        String userTempId = "";
+        // 取出token token不在cookie就在请求头中
+        HttpCookie httpCookie = request.getCookies().getFirst("userTempId");
+        if(httpCookie == null){
+            // 说明cookie里没有,从请求头中拿
+            List<String> list = request.getHeaders().get("userTempId");
+            if(list != null){
+                userTempId = list.get(0);
             }
+        } else {
+            userTempId = httpCookie.getValue();
         }
-
-        return null;
+        if(!StringUtils.isEmpty(userTempId)){
+            return userTempId;
+        }
+        return "";
     }
 
-    private Mono<Void> out(ServerHttpResponse response, ResultCodeEnum loginAuth) {
-        return null;
+    private String getUserId(ServerHttpRequest request) {
+        String token = "";
+        // 取出token token不在cookie就在请求头中
+        HttpCookie httpCookie = request.getCookies().getFirst("token");
+        if(httpCookie == null){
+            // 说明cookie里没有,从请求头中拿
+            List<String> list = request.getHeaders().get("token");
+            if(list != null){
+                token = list.get(0);
+            }
+        } else {
+            token = httpCookie.getValue();
+        }
+
+        if(!StringUtils.isEmpty(token)){
+            // 组装key，从redis取数据
+            String loginKey = "user:login:"+token;
+            String strJson = (String) redisTemplate.opsForValue().get(loginKey);
+            // 转换成对象
+            if(!StringUtils.isEmpty(strJson)){
+                JSONObject jsonObject = JSONObject.parseObject(strJson);
+                String userId = (String) jsonObject.get("userId");
+                // 这是redis里的ip
+                String ip = (String) jsonObject.get("ip");
+                if(!IpUtil.getGatwayIpAddress(request).equals(ip)){
+                    return "-1";
+                }
+                return userId;
+            }
+        }else {
+            return "";
+        }
+        return "";
+    }
+
+    private Mono<Void> out(ServerHttpResponse response, ResultCodeEnum resultCodeEnum) {
+        Result<Object> result = Result.build(null, resultCodeEnum);
+        String strJson = JSONObject.toJSONString(result);
+        DataBuffer wrap = response.bufferFactory().wrap(strJson.getBytes(StandardCharsets.UTF_8));
+        response.getHeaders().add("Content-Type", "application/json;charset=UTF-8");
+        return response.writeWith(Mono.just(wrap));
     }
 
 
