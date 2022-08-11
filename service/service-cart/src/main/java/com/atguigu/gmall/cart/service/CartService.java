@@ -28,4 +28,28 @@ public interface CartService {
     List<CartInfo> getCartList(String userId, String userTempId);
 
 
+    /**
+     * 更新选中状态
+     * @param userId 用户Id
+     * @param isChecked 选中状态
+     * @param skuId 商品id
+     */
+    void checkCart(String userId, Integer isChecked, Long skuId);
+
+    /**
+     * 删除购物项
+     * @param skuId 商品id
+     * @param userId 用户Id
+     */
+    void deleteCart(Long skuId, String userId);
+
+    /**
+     * 根据用户Id 查询已选中的购物车列表
+     * @param userId 用户Id
+     * @return 购物车列表
+     */
+    List<CartInfo> getCartCheckedList(String userId);
+
+
+
 }

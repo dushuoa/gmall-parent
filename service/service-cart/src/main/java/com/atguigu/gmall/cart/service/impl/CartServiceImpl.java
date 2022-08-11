@@ -16,6 +16,7 @@ import org.springframework.util.unit.DataUnit;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author dushuo
@@ -154,6 +155,39 @@ public class CartServiceImpl implements CartService {
                         .sort((cartInfo1,cartInfo2)-> DateUtil.truncatedCompareTo(cartInfo2.getUpdateTime(),cartInfo1.getUpdateTime(), Calendar.SECOND));
                 return loginCartInfoList;
             }
+        }
+        return null;
+    }
+
+    // 更新选中状态
+    @Override
+    public void checkCart(String userId, Integer isChecked, Long skuId) {
+        String cartKey = getKey(userId);
+        CartInfo cartInfo = (CartInfo) redisTemplate.opsForHash().get(cartKey, skuId.toString());
+        if(cartInfo != null){
+            cartInfo.setIsChecked(isChecked);
+            redisTemplate.opsForHash().put(cartKey,skuId.toString(),cartInfo);
+        }
+    }
+
+    // 删除购物项
+    @Override
+    public void deleteCart(Long skuId, String userId) {
+        String cartKey = getKey(userId);
+        redisTemplate.opsForHash().delete(cartKey,skuId.toString());
+    }
+
+    // 根据用户Id 查询已选中的购物车列表
+    @Override
+    public List<CartInfo> getCartCheckedList(String userId) {
+        String cartKey = getKey(userId);
+        List<CartInfo> cartInfoList = this.redisTemplate.opsForHash().values(cartKey);
+        List<CartInfo> cartInfoIsCheckList = cartInfoList.stream().filter(cartInfo -> {
+            cartInfo.setSkuPrice(productFeignClient.getSkuPriceBySkuId(cartInfo.getSkuId()));
+            return cartInfo.getIsChecked().intValue() == 1;
+        }).collect(Collectors.toList());
+        if(!CollectionUtils.isEmpty(cartInfoIsCheckList)){
+            return cartInfoIsCheckList;
         }
         return null;
     }

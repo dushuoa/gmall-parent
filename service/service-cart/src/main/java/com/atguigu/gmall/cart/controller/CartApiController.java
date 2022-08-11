@@ -3,13 +3,11 @@ package com.atguigu.gmall.cart.controller;
 import com.atguigu.gmall.cart.service.CartService;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.util.AuthContextHolder;
+import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.cart.CartInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -41,6 +39,7 @@ public class CartApiController {
         return Result.ok();
     }
 
+    // 获取购物车列表
     @GetMapping("/cartList")
     public Result getCartList(HttpServletRequest request){
         String userId = AuthContextHolder.getUserId(request);
@@ -49,6 +48,39 @@ public class CartApiController {
         List<CartInfo> cartList = cartService.getCartList(userId, userTempId);
         return Result.ok(cartList);
     }
+
+    //  选中状态
+    @GetMapping("checkCart/{skuId}/{isChecked}")
+    public Result checkCart(@PathVariable Long skuId,
+                            @PathVariable Integer isChecked,
+                            HttpServletRequest request){
+        String userId = AuthContextHolder.getUserId(request);
+        if(StringUtils.isEmpty(userId)){
+            userId = AuthContextHolder.getUserTempId(request);
+        }
+        cartService.checkCart(userId,isChecked,skuId);
+        return Result.ok();
+    }
+
+    // 删除购物项
+    @DeleteMapping("deleteCart/{skuId}")
+    public Result deleteCart(@PathVariable("skuId") Long skuId,
+                             HttpServletRequest request){
+        String userId = AuthContextHolder.getUserId(request);
+        if(StringUtils.isEmpty(userId)){
+            userId = AuthContextHolder.getUserTempId(request);
+        }
+        cartService.deleteCart(skuId,userId);
+        return Result.ok();
+    }
+
+    // 根据用户Id 查询已选中的购物车列表
+    @GetMapping("/getCartCheckedList/{userId}")
+    public List<CartInfo> getCartCheckedList(@PathVariable String userId){
+        return cartService.getCartCheckedList(userId);
+    }
+
+
 
 
 
