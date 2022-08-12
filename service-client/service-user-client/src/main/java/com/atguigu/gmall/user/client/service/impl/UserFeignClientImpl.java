@@ -1,6 +1,7 @@
 package com.atguigu.gmall.user.client.service.impl;
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.client.service.UserFeignClient;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,11 @@ import org.springframework.stereotype.Component;
 public class UserFeignClientImpl implements UserFeignClient {
     @Override
     public Result findUserAddressListByUserId(String userId) {
+        return null;
+    }
+
+    @Override
+    public UserInfo getUserInfoByUserId(Long userId) {
         return null;
     }
 }

@@ -1,9 +1,11 @@
 package com.atguigu.gmall.order.client;
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.client.impl.OrderFeignClientImpl;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -17,4 +19,7 @@ public interface OrderFeignClient {
 
     @GetMapping("/api/order/auth/trade")
     public Result trade();
+
+    @GetMapping("api/comment/auth/comment/{orderId}")
+    public OrderInfo getCommentInfo(@PathVariable Long orderId);
 }

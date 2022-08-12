@@ -29,20 +29,4 @@ public class MybatisPlusConfig {
         return paginationInterceptor;
     }
 
-    @Bean
-    public ISqlInjector sqlInjector() {
-        return new LogicSqlInjector();
-    }
-
-    /**
-     * SQL执行效率插件
-     */
-    @Bean
-    @Profile({"dev","test"})// 设置 dev test 环境开启
-    public PerformanceInterceptor performanceInterceptor() {
-        PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
-        performanceInterceptor.setMaxTime(2000);
-        performanceInterceptor.setFormat(true);
-        return performanceInterceptor;
-    }
 }

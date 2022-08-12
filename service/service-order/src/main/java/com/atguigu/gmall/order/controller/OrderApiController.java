@@ -1,23 +1,26 @@
 package com.atguigu.gmall.order.controller;
 
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.atguigu.gmall.cart.client.service.CartFeignClient;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.util.AuthContextHolder;
-import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.service.OrderService;
+import com.atguigu.gmall.product.client.ProductFeignClient;
 import com.atguigu.gmall.user.client.service.UserFeignClient;
-import org.apache.http.client.HttpClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -38,6 +41,9 @@ public class OrderApiController {
 
     @Resource
     private OrderService orderService;
+
+    @Resource
+    private ProductFeignClient productFeignClient;
 
     // 回显订单界面数据
     @GetMapping("auth/trade")
@@ -86,32 +92,74 @@ public class OrderApiController {
 
         String userId = AuthContextHolder.getUserId(request);
 
-        // 获取流水号
-        String tradeNo = request.getParameter("tradeNo");
-        // 判断用户传过来的和redis是否相等
-        Boolean result = orderService.isTradeNoEqualsRedis(userId, tradeNo);
-        if(!result){
-            return Result.fail().message("请刷新后再试！");
-        }
-        // 如果相等，删除redis
-        orderService.deleteRedis(userId);
+        List<CompletableFuture> completableFutureList = new ArrayList<>();
+        List<String> errorList = new ArrayList<>();
+
+        CompletableFuture<Void> tradeNoCompletableFuture = CompletableFuture.runAsync(() -> {
+            // 获取流水号
+            String tradeNo = request.getParameter("tradeNo");
+            // 判断用户传过来的和redis是否相等
+            Boolean result = orderService.isTradeNoEqualsRedis(userId, tradeNo);
+            if (!result) {
+                errorList.add("请刷新后再试！");
+            }
+            // 如果相等，删除redis
+            orderService.deleteRedis(userId);
+        });
+
+        completableFutureList.add(tradeNoCompletableFuture);
 
         // 查询库存系统,循环判断每个商品是否有库存
         List<OrderDetail> orderDetailList = orderInfo.getOrderDetailList();
         for (OrderDetail orderDetail : orderDetailList) {
-            Long skuId = orderDetail.getSkuId();
-            Integer skuNum = orderDetail.getSkuNum();
-            boolean res = orderService.checkStock(skuId, skuNum);
-            if(!res){
-                // 如果没有库存，提示扣减库存失败
-                return Result.fail().message(orderDetail.getSkuName()+"库存扣减失败！");
-            }
+            CompletableFuture<Void> priceCompletableFuture = CompletableFuture.runAsync(() -> {
+                Long skuId = orderDetail.getSkuId();
+                Integer skuNum = orderDetail.getSkuNum();
+                boolean res = orderService.checkStock(skuId, skuNum);
+                if (!res) {
+                    // 如果没有库存，提示扣减库存失败
+                    errorList.add(orderDetail.getSkuName() + "库存扣减失败！");
+                }
+                // 获取数据库的实时价格
+                BigDecimal currentPrice = productFeignClient.getSkuPriceBySkuId(skuId);
+                // 获取当前提交的购物项的价格
+                BigDecimal orderPrice = orderDetail.getOrderPrice();
+                // 如果两个价格不相等
+                if (currentPrice.compareTo(orderPrice) != 0) {
+                    String msg = currentPrice.compareTo(orderPrice) > 0 ? "涨价" : "降价";
+                    BigDecimal abs = currentPrice.subtract(orderPrice).abs();
+                    errorList.add(orderDetail.getSkuName() + msg + abs + "元");
+                }
+            });
+            completableFutureList.add(priceCompletableFuture);
         }
         // 验证通过，保存订单
+        CompletableFuture
+                .allOf(completableFutureList
+                        .toArray(new CompletableFuture[completableFutureList.size()]))
+                .join();
+        if(errorList.size()>0){
+            return Result.fail().message(StringUtils.join(errorList,","));
+        }
         orderInfo.setUserId(Long.parseLong(userId));
+
         Long orderId = orderService.submitOrder(orderInfo);
 
         return Result.ok(orderId);
+    }
+
+    // 我的订单
+    // /api/order/auth/{page}/{limit}
+    @GetMapping("/auth/{page}/{limit}")
+    public Result getMyOrder(@PathVariable Long page,
+                             @PathVariable Long limit,
+                             HttpServletRequest request){
+        // 获取用户Id
+        String userId = AuthContextHolder.getUserId(request);
+        // 封装分页参数
+        Page<OrderInfo> pageParam = new Page<>(page, limit);
+        IPage<OrderInfo> pageResult = orderService.getMyOrderPage(pageParam,userId);
+        return Result.ok(pageResult);
     }
 
 

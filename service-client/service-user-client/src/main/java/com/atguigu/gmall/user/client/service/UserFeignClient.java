@@ -1,6 +1,7 @@
 package com.atguigu.gmall.user.client.service;
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.client.service.impl.UserFeignClientImpl;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,5 +17,8 @@ public interface UserFeignClient {
 
     @GetMapping("/api/user/inner/findUserAddressListByUserId/{userId}")
     public Result findUserAddressListByUserId(@PathVariable String userId);
+
+    @GetMapping("/api/user/inner/{userId}")
+    public UserInfo getUserInfoByUserId(@PathVariable Long userId);
 
 }

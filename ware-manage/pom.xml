@@ -6,6 +6,7 @@
 		<groupId>com.atguigu.gmalls</groupId>
 		<artifactId>gmall-parent</artifactId>
 		<version>1.0-SNAPSHOT</version>
+		<relativePath/>
 	</parent>
 
 	<version>1.0</version>

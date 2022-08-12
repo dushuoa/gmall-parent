@@ -6,8 +6,11 @@ import com.atguigu.gmall.model.enums.ProcessStatus;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.mapper.OrderDetailMapper;
+import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.mapper.OrderServiceMapper;
 import com.atguigu.gmall.order.service.OrderService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Resource
     private RedisTemplate redisTemplate;
+
+    @Resource
+    private OrderInfoMapper orderInfoMapper;
 
     private String wareUrl = "http://localhost:9001";
 
@@ -91,5 +97,16 @@ public class OrderServiceImpl implements OrderService {
         String result = HttpClientUtil.doGet(uri);
 
         return "1".equals(result);
+    }
+
+    // 我的订单
+    @Override
+    public IPage<OrderInfo> getMyOrderPage(Page<OrderInfo> pageParam, String userId) {
+        IPage<OrderInfo> pageResult = orderInfoMapper.selectMyOrderPage(pageParam, userId);
+        List<OrderInfo> orderInfoList = pageResult.getRecords();
+        orderInfoList.forEach(orderInfo -> {
+            orderInfo.setOrderStatusName(OrderStatus.getStatusNameByStatus(orderInfo.getOrderStatus()));
+        });
+        return pageResult;
     }
 }
