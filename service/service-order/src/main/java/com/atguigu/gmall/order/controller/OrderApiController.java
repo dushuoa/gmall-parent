@@ -3,6 +3,8 @@ package com.atguigu.gmall.order.controller;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.atguigu.gmall.cart.client.service.CartFeignClient;
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.common.service.RabbitService;
+import com.atguigu.gmall.common.service.constant.MqConst;
 import com.atguigu.gmall.common.util.AuthContextHolder;
 import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.order.OrderDetail;
@@ -144,7 +146,6 @@ public class OrderApiController {
         orderInfo.setUserId(Long.parseLong(userId));
 
         Long orderId = orderService.submitOrder(orderInfo);
-
         return Result.ok(orderId);
     }
 
@@ -160,6 +161,13 @@ public class OrderApiController {
         Page<OrderInfo> pageParam = new Page<>(page, limit);
         IPage<OrderInfo> pageResult = orderService.getMyOrderPage(pageParam,userId);
         return Result.ok(pageResult);
+    }
+
+    // 根据订单id获取订单详细数据
+    @GetMapping("/auth/comment/{orderId}")
+    public OrderInfo getCommentInfo(@PathVariable Long orderId){
+        OrderInfo orderInfo = orderService.getOrderInfo(orderId);
+        return orderInfo;
     }
 
 

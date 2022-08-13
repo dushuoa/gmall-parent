@@ -1,13 +1,15 @@
-package com.atguigu.gmall.order.controller;
+package com.atguigu.gmall.item.controller;
 
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.util.AuthContextHolder;
+import com.atguigu.gmall.item.service.CommentInfoService;
 import com.atguigu.gmall.model.comment.CommentInfo;
-import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.model.user.UserInfo;
-import com.atguigu.gmall.order.service.CommentInfoService;
 import com.atguigu.gmall.user.client.service.UserFeignClient;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +23,7 @@ import java.util.List;
  * @Version 1.0
  */
 @RestController
-@RequestMapping("api/comment/")
+@RequestMapping("api/comment/commentInfo")
 public class CommentInfoApiController {
 
     @Autowired
@@ -30,15 +32,9 @@ public class CommentInfoApiController {
     @Resource
     private UserFeignClient userFeignClient;
 
-    @GetMapping("/auth/comment/{orderId}")
-    public OrderInfo getCommentInfo(@PathVariable Long orderId){
-        OrderInfo orderInfo = commentInfoService.getCommentInfo(orderId);
-        return orderInfo;
-    }
-
     // api/comment/commentInfo/auth/save
     // 保存评价信息 POST
-    @PostMapping("/commentInfo/auth/save")
+    @PostMapping("/auth/save")
     public Result savaComment(@RequestBody List<CommentInfo> commentInfoList,
                               HttpServletRequest request){
         String userId = AuthContextHolder.getUserId(request);
@@ -53,6 +49,15 @@ public class CommentInfoApiController {
             return Result.ok();
         }
         return Result.fail();
+    }
+
+    // 获取评论列表
+    @GetMapping("/{spuId}/{page}/{limit}")
+    public Result getPageList(@PathVariable Long spuId,
+                              @PathVariable Long page,
+                              @PathVariable Long limit){
+        IPage<CommentInfo> pageResult = commentInfoService.getPageList(page,limit,spuId);
+        return Result.ok(pageResult);
     }
 
 

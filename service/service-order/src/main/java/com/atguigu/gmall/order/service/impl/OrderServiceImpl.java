@@ -1,5 +1,7 @@
 package com.atguigu.gmall.order.service.impl;
 
+import com.atguigu.gmall.common.service.RabbitService;
+import com.atguigu.gmall.common.service.constant.MqConst;
 import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.enums.OrderStatus;
 import com.atguigu.gmall.model.enums.ProcessStatus;
@@ -9,6 +11,7 @@ import com.atguigu.gmall.order.mapper.OrderDetailMapper;
 import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.mapper.OrderServiceMapper;
 import com.atguigu.gmall.order.service.OrderService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +41,9 @@ public class OrderServiceImpl implements OrderService {
     @Resource
     private OrderInfoMapper orderInfoMapper;
 
+    @Resource
+    private RabbitService rabbitService;
+
     private String wareUrl = "http://localhost:9001";
 
     // 保存订单数据
@@ -62,6 +68,7 @@ public class OrderServiceImpl implements OrderService {
             orderDetail.setOrderId(orderInfo.getId());
             orderDetailMapper.insert(orderDetail);
         });
+        rabbitService.sendDelay(MqConst.EXCHANGE_DIRECT_ORDER_CANCEL,MqConst.ROUTING_ORDER_CANCEL,orderInfo.getId(),3*1000);
         return orderInfo.getId();
     }
 
@@ -108,5 +115,31 @@ public class OrderServiceImpl implements OrderService {
             orderInfo.setOrderStatusName(OrderStatus.getStatusNameByStatus(orderInfo.getOrderStatus()));
         });
         return pageResult;
+    }
+
+    // 根据订单id获取订单的详细数据
+    @Override
+    public OrderInfo getOrderInfo(Long orderId) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if(orderInfo!=null){
+            List<OrderDetail> orderDetailList = orderDetailMapper.selectList(new QueryWrapper<OrderDetail>().eq("order_id", orderId));
+            orderInfo.setOrderDetailList(orderDetailList);
+        }
+        return orderInfo;
+    }
+
+    // 根据订单id修改订单状态
+    @Override
+    public void updateOrderStatus(Long orderId) {
+        this.updateOrderStatusByOrderId(orderId,ProcessStatus.CLOSED);
+    }
+
+    private void updateOrderStatusByOrderId(Long orderId, ProcessStatus processStatus) {
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setId(orderId);
+        orderInfo.setProcessStatus(processStatus.name());
+        orderInfo.setOrderStatus(processStatus.getOrderStatus().name());
+        orderInfo.setUpdateTime(new Date());
+        orderServiceMapper.updateById(orderInfo);
     }
 }

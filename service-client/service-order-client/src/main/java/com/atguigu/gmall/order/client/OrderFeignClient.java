@@ -20,6 +20,6 @@ public interface OrderFeignClient {
     @GetMapping("/api/order/auth/trade")
     public Result trade();
 
-    @GetMapping("api/comment/auth/comment/{orderId}")
+    @GetMapping("/api/order/auth/comment/{orderId}")
     public OrderInfo getCommentInfo(@PathVariable Long orderId);
 }

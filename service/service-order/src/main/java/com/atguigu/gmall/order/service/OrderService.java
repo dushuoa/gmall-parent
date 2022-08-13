@@ -54,4 +54,18 @@ public interface OrderService {
      * @return 结果
      */
     IPage<OrderInfo> getMyOrderPage(Page<OrderInfo> pageParam, String userId);
+
+    /**
+     * 根据订单id获取订单的详细数据
+     * @param orderId 订单id
+     * @return 订单的详细数据
+     */
+    OrderInfo getOrderInfo(Long orderId);
+
+    /**
+     * 根据订单id修改订单状态
+     * @param orderId 订单id
+     */
+    void updateOrderStatus(Long orderId);
+
 }

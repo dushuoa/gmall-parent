@@ -37,6 +37,24 @@ public class RabbitService {
         return true;
     }
 
+    // 发送延迟消息的方法
+    public Boolean sendDelay(String exchange,String routingKey,Object msg,int timeOut){
+        GmallCorrelationData gmallCorrelationData = new GmallCorrelationData();
+        gmallCorrelationData.setMessage(msg);
+        gmallCorrelationData.setExchange(exchange);
+        gmallCorrelationData.setRoutingKey(routingKey);
+        String id = UUID.randomUUID().toString().replaceAll("-","");
+        gmallCorrelationData.setId(id);
+        gmallCorrelationData.setDelayTime(timeOut);
+        gmallCorrelationData.setDelay(true);
+        redisTemplate.opsForValue().set(id, JSONObject.toJSONString(gmallCorrelationData),10, TimeUnit.MINUTES);
+        rabbitTemplate.convertAndSend(exchange,routingKey,msg,message -> {
+            message.getMessageProperties().setDelay(timeOut);
+            return message;
+        },gmallCorrelationData);
+        return true;
+    }
+
 
 
 }

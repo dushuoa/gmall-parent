@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONPOJOBuilder;
 import com.atguigu.gmall.common.cache.GmallCache;
 import com.atguigu.gmall.common.constant.RedisConst;
+import com.atguigu.gmall.common.service.RabbitService;
+import com.atguigu.gmall.common.service.constant.MqConst;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
@@ -75,6 +77,9 @@ public class ManageServiceImpl implements ManageService {
     private RedissonClient redissonClient;
     @Resource
     private BannerInfoMapper bannerInfoMapper;
+    @Resource
+    private RabbitService rabbitService;
+
 
     //查询全部一级分类
     @Override
@@ -319,6 +324,9 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
+
+        // 发送到消息队列 商品上架
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_UPPER,skuId);
     }
 
     // 下架
@@ -328,6 +336,8 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
+        // 发送到消息队列 商品下架
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_LOWER,skuId);
     }
 
     @Override

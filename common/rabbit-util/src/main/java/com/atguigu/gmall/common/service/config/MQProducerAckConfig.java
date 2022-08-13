@@ -51,6 +51,20 @@ public class MQProducerAckConfig implements RabbitTemplate.ConfirmCallback,Rabbi
         }
     }
 
+    @Override
+    public void returnedMessage(Message message, int replyCode, String replyText, String exchange, String routingKey) {
+        // 反序列化对象输出
+        System.out.println("消息主体: " + new String(message.getBody()));
+        System.out.println("应答码: " + replyCode);
+        System.out.println("描述：" + replyText);
+        System.out.println("消息使用的交换器 exchange : " + exchange);
+        System.out.println("消息使用的路由键 routing : " + routingKey);
+        String correlationId = (String) message.getMessageProperties().getHeaders().get("spring_returned_message_correlation");
+        String strJson = (String) redisTemplate.opsForValue().get(correlationId);
+        GmallCorrelationData gmallCorrelationData = JSONObject.parseObject(strJson, GmallCorrelationData.class);
+        this.retrySendMsg(gmallCorrelationData);
+    }
+
     private void retrySendMsg(CorrelationData correlationData) {
         GmallCorrelationData gmallCorrelationData = (GmallCorrelationData) correlationData;
         int retryCount = gmallCorrelationData.getRetryCount();
@@ -62,23 +76,20 @@ public class MQProducerAckConfig implements RabbitTemplate.ConfirmCallback,Rabbi
             retryCount++;
             gmallCorrelationData.setRetryCount(retryCount);
             redisTemplate.opsForValue().set(gmallCorrelationData.getId(), JSONObject.toJSONString(gmallCorrelationData),10, TimeUnit.MINUTES);
-            rabbitTemplate.convertAndSend(
-                    gmallCorrelationData.getExchange(),
-                    gmallCorrelationData.getRoutingKey(),
-                    gmallCorrelationData.getMessage(),gmallCorrelationData);
-        }
-    }
+            boolean result = gmallCorrelationData.isDelay();
+            if(result){
+                // 如果是延迟消息，则发送延迟队列
+                rabbitTemplate.convertAndSend(gmallCorrelationData.getExchange(),gmallCorrelationData.getRoutingKey(),gmallCorrelationData.getMessage(),message -> {
+                    message.getMessageProperties().setDelay(gmallCorrelationData.getDelayTime());
+                    return message;
+                },gmallCorrelationData);
+            } else {
+                rabbitTemplate.convertAndSend(
+                        gmallCorrelationData.getExchange(),
+                        gmallCorrelationData.getRoutingKey(),
+                        gmallCorrelationData.getMessage(),gmallCorrelationData);
+            }
 
-    @Override
-    public void returnedMessage(Message message, int replyCode, String replyText, String exchange, String routingKey) {
-        // 反序列化对象输出
-        System.out.println("消息主体: " + new String(message.getBody()));
-        System.out.println("应答码: " + replyCode);
-        System.out.println("描述：" + replyText);
-        System.out.println("消息使用的交换器 exchange : " + exchange);
-        System.out.println("消息使用的路由键 routing : " + routingKey);
-        String correlationId = message.getMessageProperties().getCorrelationId();
-        GmallCorrelationData gmallCorrelationData = (GmallCorrelationData) redisTemplate.opsForValue().get(correlationId);
-        this.retrySendMsg(gmallCorrelationData);
+        }
     }
 }

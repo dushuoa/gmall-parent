@@ -1,5 +1,6 @@
 package com.atguigu.gmall.mq.receiver;
 
+import com.atguigu.gmall.mq.config.DelayedMqConfig;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.Exchange;
@@ -9,6 +10,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @Author dushuo
@@ -30,4 +33,9 @@ public class ConfirmReceiver {
         channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
     }
 
+    @RabbitListener(queues = DelayedMqConfig.queue_delay_1)
+    public void get(String msg){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println("接收时间: " + sdf.format(new Date()) + " Delay rece." + msg);
+    }
 }

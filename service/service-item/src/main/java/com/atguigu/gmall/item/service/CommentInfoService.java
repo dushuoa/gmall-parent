@@ -1,7 +1,9 @@
-package com.atguigu.gmall.order.service;
+package com.atguigu.gmall.item.service;
 
 import com.atguigu.gmall.model.comment.CommentInfo;
 import com.atguigu.gmall.model.order.OrderInfo;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -12,12 +14,6 @@ import java.util.List;
  */
 public interface CommentInfoService {
 
-    /**
-     * 根据订单id获取订单的详细数据
-     * @param orderId 订单id
-     * @return 订单的详细数据
-     */
-    OrderInfo getCommentInfo(Long orderId);
 
     /**
      * 保存评价信息
@@ -25,4 +21,12 @@ public interface CommentInfoService {
      */
     void save(List<CommentInfo> commentInfoList);
 
+
+    /**
+     * 获取评论列表
+     * @param pageParam 分页参数
+     * @param spuId spuId
+     * @return 评论列表
+     */
+    IPage<CommentInfo> getPageList(Long page, Long limit, Long spuId);
 }

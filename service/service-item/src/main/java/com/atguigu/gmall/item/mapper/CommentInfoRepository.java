@@ -1,8 +1,10 @@
-package com.atguigu.gmall.order.mapper;
+package com.atguigu.gmall.item.mapper;
 
 import com.atguigu.gmall.model.comment.CommentInfo;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @Author dushuo
@@ -11,4 +13,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface CommentInfoRepository extends MongoRepository<CommentInfo,Long> {
+    // 根据spuId查询所有
+    List<CommentInfo> findBySpuId(Long spuId);
 }
