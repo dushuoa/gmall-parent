@@ -91,6 +91,7 @@ public class GwareServiceImpl implements GwareService {
         queryWrapper.in("sku_id", skuIdlist);
         List<WareSku> wareSkuList = wareSkuMapper.selectList(queryWrapper);
 
+        // key: 仓库Id value: 仓库对应的skuId的集合
         Map<String, List<String>> wareSkuMap = new HashMap<>();
 
         for (WareSku wareSku : wareSkuList) {

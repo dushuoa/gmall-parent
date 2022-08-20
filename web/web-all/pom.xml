@@ -39,6 +39,12 @@
             <artifactId>service-order-client</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.atguigu.gmall</groupId>
+            <artifactId>service-activity-client</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 

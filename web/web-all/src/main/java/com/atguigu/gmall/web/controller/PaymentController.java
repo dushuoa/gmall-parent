@@ -5,6 +5,7 @@ import com.atguigu.gmall.order.client.OrderFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +29,13 @@ public class PaymentController {
         request.setAttribute("orderInfo",orderInfo);
         return "payment/pay";
     }
+
+    @RequestMapping("/pay/success.html")
+    public String paySuccess(){
+        return "payment/success";
+    }
+
+
 
 
 }

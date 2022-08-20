@@ -1,8 +1,12 @@
 package com.atguigu.gmall.order.service;
 
+import com.atguigu.gmall.model.enums.ProcessStatus;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author dushuo
@@ -67,5 +71,40 @@ public interface OrderService {
      * @param orderId 订单id
      */
     void updateOrderStatus(Long orderId);
+
+    /**
+     * 根据订单id修改订单状态为成功
+     * @param orderId 订单id
+     * @param processStatus 流程
+     */
+    public void updateOrderStatusByOrderId(Long orderId, ProcessStatus processStatus);
+
+    /**
+     * 支付成功后，扣减库存
+     * @param orderId 订单id
+     */
+    void subWare(Long orderId);
+
+    /**
+     * 拆分订单
+     * @param orderId 订单Id
+     * @param wareSkuMap 请求参数
+     * @return 拆分后订单以及子订单
+     */
+    List<OrderInfo> orderSplit(long orderId, String wareSkuMap);
+
+    /**
+     * 根据对象转换为map
+     * @param orderInfo 订单对象
+     * @return map
+     */
+    Map<String, Object> getMapByOrderInfo(OrderInfo orderInfo);
+
+    /**
+     * 更新过期订单
+     * @param orderId 订单Id
+     * @param flag 是否删除成功
+     */
+    void execExpiredOrder(Long orderId,String flag);
 
 }
